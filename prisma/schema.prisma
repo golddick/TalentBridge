@@ -1,0 +1,245 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  SUPERADMIN
+  RECRUITER
+  HIRING_MANAGER
+  APPLICANT
+  ADMIN
+}
+
+enum JobStatus {
+  DRAFT
+  OPEN
+  CLOSED
+}
+
+enum RequirementType {
+  MANDATORY
+  PREFERRED
+  INFORMATIONAL
+}
+
+enum EvaluationStatus {
+  CONFIRMED
+  UNCLEAR
+  NOT_FOUND
+}
+
+enum QualificationStatus {
+  STRONG_MATCH
+  QUALIFIED
+  NEEDS_REVIEW
+  NOT_QUALIFIED
+}
+
+enum ApplicationStatus {
+  UPLOADED
+  PROCESSING
+  EXTRACTED
+  EVALUATING
+  QUALIFIED
+  SHORTLISTED
+  REVIEW_REQUIRED
+  NOT_QUALIFIED
+  REJECTED
+}
+
+model User {
+  id             String        @id @default(cuid())
+  name           String
+  email          String        @unique
+  role           UserRole      @default(RECRUITER)
+  passwordHash   String?
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  candidate      Candidate?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
+// Note: OTP codes are generated, stored, delivered, and verified entirely by
+// DropAphi's hosted OTP service (see lib/dropaphi-otp.ts) — TalentBridge does
+// not persist a local OTP table.
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  users     User[]
+  jobs      Job[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Job {
+  id                     String           @id @default(cuid())
+  organizationId         String
+  organization           Organization     @relation(fields: [organizationId], references: [id])
+  title                  String
+  description            String
+  status                 JobStatus        @default(DRAFT)
+  location               String?
+  employmentType         String?
+  qualificationThreshold Int              @default(70)
+  requirements           JobRequirement[]
+  applications           Application[]
+  createdAt              DateTime         @default(now())
+  updatedAt              DateTime         @updatedAt
+}
+
+model JobRequirement {
+  id          String           @id @default(cuid())
+  jobId       String
+  job         Job              @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  type        RequirementType  @default(MANDATORY)
+  weight      Int              @default(10)
+  mandatory   Boolean          @default(false)
+  criteria    EvaluationCriterion[]
+}
+
+model Candidate {
+  id           String           @id @default(cuid())
+  userId       String?          @unique
+  user         User?            @relation(fields: [userId], references: [id])
+  name         String
+  email        String?
+  profile      Json?
+  skills       CandidateSkill[]
+  cvDocs       CVDocument[]
+  applications Application[]
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+}
+
+model CandidateSkill {
+  id          String    @id @default(cuid())
+  candidateId String
+  candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  skill       String
+  confidence  Float     @default(0)
+  evidence    String?
+}
+
+model Application {
+  id                  String               @id @default(cuid())
+  jobId               String
+  job                 Job                  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  candidateId         String
+  candidate           Candidate            @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  cvUrl               String
+  status              ApplicationStatus    @default(UPLOADED)
+  qualificationScore  Int?
+  qualificationStatus QualificationStatus?
+  evaluation          Evaluation?
+  decisions           RecruiterDecision[]
+  auditLogs           AuditLog[]
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+}
+
+model Evaluation {
+  id            String                @id @default(cuid())
+  applicationId String                @unique
+  application   Application           @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  score         Int
+  status        QualificationStatus
+  reason        String?
+  strengths     Json?
+  gaps          Json?
+  criteria      EvaluationCriterion[]
+  createdAt     DateTime              @default(now())
+}
+
+model EvaluationCriterion {
+  id            String            @id @default(cuid())
+  evaluationId  String
+  evaluation    Evaluation        @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+  requirementId String
+  requirement   JobRequirement    @relation(fields: [requirementId], references: [id])
+  score         Int
+  status        EvaluationStatus
+  evidence      String?
+  confidence    Float             @default(0)
+}
+
+model RecruiterDecision {
+  id            String      @id @default(cuid())
+  applicationId String
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  recruiterId   String
+  decision      String
+  reason        String?
+  createdAt     DateTime    @default(now())
+}
+
+model AuditLog {
+  id            String      @id @default(cuid())
+  applicationId String
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  actorId       String
+  action        String
+  metadata      Json?
+  createdAt     DateTime    @default(now())
+}
+
+model CVDocument {
+  id          String      @id @default(cuid())
+  candidateId String
+  candidate   Candidate   @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  title       String
+  templateId  String?
+  status      String      @default("draft")
+  fileUrl     String?
+  sections    CVSection[]
+  versions    CVVersion[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model CVSection {
+  id           String     @id @default(cuid())
+  cvDocumentId String
+  cvDocument   CVDocument @relation(fields: [cvDocumentId], references: [id], onDelete: Cascade)
+  type         String
+  order        Int
+  content      Json
+}
+
+model CVVersion {
+  id           String     @id @default(cuid())
+  cvDocumentId String
+  cvDocument   CVDocument @relation(fields: [cvDocumentId], references: [id], onDelete: Cascade)
+  snapshot     Json
+  createdAt    DateTime   @default(now())
+}
+
+// Singleton row (id is always "singleton") holding the platform-wide AI
+// provider configuration, editable from the Super Admin UI at /admin
+// instead of only through .env. If no row exists, lib/ai-settings.ts falls
+// back to the corresponding environment variables — so .env-only setups
+// keep working exactly as before.
+model AiSettings {
+  id               String   @id @default("singleton")
+  provider         String   @default("openai") // "openai" | "deepseek" | "openrouter"
+  openaiApiKey     String?
+  openaiModel      String?
+  deepseekApiKey   String?
+  deepseekModel    String?
+  deepseekBaseUrl  String?
+  openrouterApiKey String?
+  openrouterModel  String?
+  openrouterBaseUrl String?
+  agentrouterApiKey String?
+  agentrouterModel  String?
+  agentrouterBaseUrl String?
+  updatedAt        DateTime @updatedAt
+}
