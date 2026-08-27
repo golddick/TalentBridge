@@ -56,7 +56,7 @@ function RecruiterApplicationView({ application }: { application: any }) {
   return (
     <div>
       <TopNav />
-      <main className="mx-auto max-w-4xl px-6 py-8">
+      <main className="mx-auto max-w-7xl px-6 py-8">
         <Link href={`/jobs/${application.jobId}`} className="mb-4 inline-block text-sm text-muted hover:text-ink">
           ← {application.job.title}
         </Link>

@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
     "prisma:generate": "prisma generate",
@@ -12,7 +12,8 @@
     "prisma:studio": "prisma studio",
     "db:seed": "tsx prisma/seed.ts",
     "verify:ai": "tsx scripts/verify-ai-provider.ts",
-    "sync:ai": "tsx scripts/sync-agentrouter-settings.ts"
+    "sync:ai": "tsx scripts/sync-agentrouter-settings.ts",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@prisma/client": "^5.20.0",

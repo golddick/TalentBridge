@@ -42,7 +42,7 @@ export default async function JobDetailPage({
   return (
     <div>
       <TopNav />
-      <main className="mx-auto max-w-5xl px-6 py-8">
+      <main className="mx-auto max-w-7xl px-6 py-8">
         <Link href="/jobs" className="mb-4 inline-block text-sm text-muted hover:text-ink">
           ← All jobs
         </Link>

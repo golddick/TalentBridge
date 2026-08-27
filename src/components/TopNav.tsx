@@ -28,16 +28,16 @@ export async function TopNav({ userName }: { userName?: string | null }) {
 
   return (
     <header className="border-b border-border bg-surface">
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3 sm:px-6 sm:py-4">
+      <div className="mx-auto flex w-full items-center justify-between gap-x-4 gap-y-2 px-4 py-3 sm:px-6 sm:py-4">
         <div className="flex min-w-0 items-center gap-4 sm:gap-8">
           <Link href="/dashboard" className="shrink-0 font-display text-lg font-bold text-ink">
             TalentBridge
           </Link>
           {!isSuperadmin && (
             <nav className="flex items-center gap-3 text-sm text-muted sm:gap-5">
-              <Link href="/dashboard" className="hover:text-ink">
+              {/* <Link href="/dashboard" className="hover:text-ink">
                 Overview
-              </Link>
+              </Link> */}
               <Link href="/jobs" className="hover:text-ink">
                 Jobs
               </Link>
