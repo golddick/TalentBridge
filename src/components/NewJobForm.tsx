@@ -203,8 +203,7 @@ export function NewJobForm() {
         <p className="text-sm text-muted">
           Click "Generate with AI" to turn the job description above into a weighted requirement
           list automatically, then edit, add, or remove any row before creating the job — or skip
-          it and add everything manually (same shape as the demo data in{" "}
-          <code className="font-mono text-xs">prisma/seed.ts</code>).
+          it and add everything manually 
         </p>
 
         {generateError && <p className="text-sm text-danger">{generateError}</p>}

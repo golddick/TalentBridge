@@ -14,8 +14,7 @@ export default function NewJobPage() {
         <h1 className="mb-1 text-2xl font-bold">Create a vacancy</h1>
         <p className="mb-6 text-sm text-muted">
           Paste the job description, then either let TalentBridge auto-generate requirements from
-          it, or add your own below — same idea as the demo data in{" "}
-          <code className="font-mono text-xs">prisma/seed.ts</code>.
+          it, or add your own below 
         </p>
         <NewJobForm />
       </main>
